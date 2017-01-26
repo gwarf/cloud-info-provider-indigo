@@ -41,7 +41,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root,-)
-%{python_sitelib}/cloud_info_to_cmdb
+%{python_sitelib}/cloud_info*
 /usr/bin/send-to-cmdb
 %config /etc/cloud-info-provider/templates
 
