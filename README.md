@@ -11,7 +11,13 @@ and orchestration of VM and containers.
 
 The Cloud Information Provider should be deployed at a site level and will be
 used to publish information on supported images and containers at the site it
-is configured for.
+is configured for, the code for the Cloud Information Provider is avaiable in
+the followint repository: https://github.com/indigo-dc/cloud-info-provider.
+
+This repository contains all the INDIGO-specific content:
+* JSON templates
+* send-to-cmdb script to interact with the CMDB
+* documentation
 
 The generated representation is described using a
 [Mako](http://www.makotemplates.org/) template having access to the cloud

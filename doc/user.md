@@ -4,22 +4,22 @@
 
 Depending on the template used output can range from JSON to LDIF.
 
-The ```--template-extension``` (default: ```indigo```) allows to select different
-templates based on thier file extension.
+The ```--template-extension``` (default: ```ldif```) allows to select different
+templates based on their file extension.
 Templates should be available inside the directory ```--template-dir```
-(default: ```/etc/cloud-info-provider-indigo/templates```)
+(default: ```/etc/cloud-info-provider/templates```)
 
-The ```--yaml-file``` (default ```/etc/cloud-info-provider-indigo/static.yaml``` allows
+The ```--yaml-file``` (default ```/etc/cloud-info-provider/static.yaml``` allows
 to set some static values (see sample.static.yaml for a complete example with comments).
 
-Simple example of ```/etc/cloud-info-provider-indigo/static.yaml``` for an opennebula
+Simple example of ```/etc/cloud-info-provider/static.yaml``` for an opennebula
 endpoint:
 
 For OpenNebula the endpoints section is required, but for OpenStack it can be
 omitted.
 For other templates (ie ldif) some more information might need to be added to
 the `static.yaml` file, see the examples available inside the
-`/etc/cloud-info-provider-indigo` directory.
+`/etc/cloud-info-provider` directory.
 
 ``` yaml
 site:
@@ -51,7 +51,8 @@ listing of options.
 
 For example for OpenStack, use a command line similar to the following:
 ```
-cloud-info-provider-indigo-service \
+cloud-info-provider-service \
+  --template-extension indigo \
   --middleware openstack \
   --os-username <username> \
   --os-password <password> \
@@ -63,6 +64,7 @@ The auth-url should be something like this: ` http://192.168.56.101:5000/v2.0 `.
 For example for OpenNebula, use a command line similar to the following:
 ```
 cloud-info-provider-indigo-service \
+  --template-extension indigo \
   --middleware indigoon \
   --on-auth <username>:<password> \
   --on-rpcxml-endpoint <rpc-xml-endpoint>
@@ -82,7 +84,8 @@ It will expect JON from its standard input and use CMDB API to import/update
 information about images available in the cloud middleware.
 
 ``` sh
-cloud-info-provider-indigo-service \
+cloud-info-provider-service \
+  --template-extension indigo \
   --middleware openstack \
   --os-username <username> \
   --os-password <password> \
@@ -97,7 +100,8 @@ cloud-info-provider-indigo-service \
 Real example
 
 ``` sh
-cloud-info-provider-indigo-service \
+cloud-info-provider-service \
+  --template-extension indigo \
   --middleware openstack \
   --os-username admin \
   --os-tenant-name demo \

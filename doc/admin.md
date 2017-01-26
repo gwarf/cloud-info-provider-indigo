@@ -14,15 +14,18 @@ the endpoint should use the v2.0 OpenStack Identity API.
 v3 OpenStack Identity API is available in the mitaka_keystoneauth branch, and
 will be merged to master later.
 
-Supported OS are Ubuntu Trusty and CentOS 7.
+Supported OS are Ubuntu 14.04 (Trusty) and CentOS 7.
 
 ## Binary packages
 
 Packages are available at the [INDIGO repository](http://repo.indigo-datacloud.eu).
 Use the appropriate repository for your distribution and install using the usual tools.
 
-* ubuntu package: python-cloud-info-provider-indigo
-* RHEL 7 package: cloud-info-provider-indigo
+* ubuntu package: python-cloud-info-provider-indigo and python-cloud-info-provider
+* RHEL 7 package: cloud-info-provider-indigo and cloud-info-provider
+
+The cloud-info-provider package is a dependency of the
+cloud-info-provider-indigo package and will be installed automatically.
 
 ## Installing using the indigo.cloud-info-provider Ansible role
 

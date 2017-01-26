@@ -2,39 +2,76 @@
 
 ## Building from source
 
-Get the source by cloning this repo and do a pip install.
+Get the source by cloning the repo and do a pip install.
 
-As pip will have to copy files to /etc/cloud-info-provider-indigo directory,
+As pip will have to copy files to /etc/cloud-info-provider directory,
 the installation user should be able to write to it, so it is recommended to
 create it before using pip.
 
 ``` sh
-sudo mkdir /etc/cloud-info-provider-indigo
-sudo chgrp you_user /etc/cloud-info-provider-indigo
-sudo chmod g+rwx /etc/cloud-info-provider-indigo
+sudo mkdir /etc/cloud-info-provider
+sudo chgrp your_user /etc/cloud-info-provider
+sudo chmod g+rwx /etc/cloud-info-provider
 ```
+
+### Building the cloud-info-provider python package
 
 ``` sh
 git clone https://github.com/indigo-dc/cloud-info-provider
-cd cloud-info-provider 
+cd cloud-info-provider
 pip install .
 ```
 
-## Building package on Ubuntu
+### Building the cloud-info-provider-indigo python package
+
+``` sh
+git clone https://github.com/indigo-dc/cloud-info-provider-indigo
+cd cloud-info-provider-indigo
+pip install .
+```
+
+## Building packages on Ubuntu
+
+The build procedure is identical for the two packages.
+
+From the checkout of the appropriate tag of the git repository run:
 
 ``` sh
 sudo apt install devscripts build-essential debhelper python-all python-all-dev python-pbr python-setuptools python-support
 debuild --no-tgz-check binary
 ```
 
-## Building package on CentOS
+## Building package on CentOS 7
+
+The build dependency python-pbr comes from the OpenStack repository.
+
+The build procedure is similar for the two packages.
+
+### Building cloud-info-provider 0.7.0 on CentOS 7
 
 ``` sh
-sudo yum install rpm-build python-br
+sudo yum install -y centos-release-openstack-liberty
+sudo yum install rpm-build python-pbr python-setuptools
 echo '%_topdir %(echo $HOME)/rpmbuild' > ~/.rpmmacros
 mkdir -p ~/rpmbuild/SOURCES
+git clone https://github.com/indigo-dc/cloud-info-provider.git
+git checkout 0.7.0
 python setup.py sdist
-cp dist/cloud_provider_indigo-*.tar.gz ~/rpmbuild/SOURCES
+cp dist/cloud_info_provider-*.tar.gz ~/rpmbuild/SOURCES
+rpmbuild -ba rpm/cloud-info-provider.spec
+```
+
+### Building cloud-info-provider-indigo 0.10.0 on CentOS 7
+
+``` sh
+sudo yum install -y centos-release-openstack-liberty
+sudo yum install rpm-build python-pbr python-setuptools
+echo '%_topdir %(echo $HOME)/rpmbuild' > ~/.rpmmacros
+mkdir -p ~/rpmbuild/SOURCES
+git clone https://github.com/indigo-dc/cloud-info-provider-indigo.git
+git checkout 0.10.0
+python setup.py sdist
+cp dist/cloud_info_provider_indigo-*.tar.gz ~/rpmbuild/SOURCES
 rpmbuild -ba rpm/cloud-info-provider-indigo.spec
 ```
 
