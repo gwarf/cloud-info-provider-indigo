@@ -1,0 +1,29 @@
+Source: python-cloud-info-provider-indigo
+Section: net
+Priority: extra
+Maintainer: Baptiste Grenier <baptiste.grenier@egi.eu>
+Build-Depends:
+ debhelper (>= 7.0.50),
+ dh-python,
+ python-all (>= 2.7),
+ python-all-dev (>= 2.7),
+ python-support
+Build-Depends-Indep:
+ python-pbr (>= 0.6),
+ python-setuptools
+Standards-Version: 3.9.6
+Homepage: http://github.com/indigo-dc/cloud-info-provider-indigo
+Vcs-Git: https://github.com/indigo-dc/cloud-info-provider-indigo.git
+
+Package: python-cloud-info-provider-indigo
+Architecture: all
+Section: python
+Depends: ${python:Depends}, ${misc:Depends},
+ python-requests,
+ python-cloud-info-provider
+Provides: ${python:Provides}
+Description: INDIGO-specific configuration for Information provider for Cloud
+ Compute and Cloud Storage services.
+ Using the provided templates, the cloud-info-provider can output JSON formatted
+ information.
+ A script allowing to send data to INDIGO CMDB is also provided.

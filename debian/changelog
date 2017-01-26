@@ -1,0 +1,6 @@
+python-cloud-info-provider-indigo (0.10.0) trusty; urgency=medium
+
+  * First release after removing all non INDIGO-specific files from this
+    package.
+
+ -- Baptiste Grenier <baptiste.grenier@egi.eu>  Mon, 23 Sep 2017 15:40:42 +0200
