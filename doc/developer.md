@@ -34,10 +34,21 @@ pip install .
 
 The build procedure is identical for the two packages.
 
-From the checkout of the appropriate tag of the git repository run:
+``` sh
+sudo apt update
+sudo apt install -y devscripts build-essential debhelper python-all python-all-dev python-pbr python-setuptools python-support git
+git clone https://github.com/indigo-dc/cloud-info-provider.git
+cd cloud-info-provider
+git checkout 0.7.0
+debuild --no-tgz-check binary
+```
 
 ``` sh
-sudo apt install devscripts build-essential debhelper python-all python-all-dev python-pbr python-setuptools python-support
+sudo apt update
+sudo apt install -y devscripts build-essential debhelper python-all python-all-dev python-pbr python-setuptools python-support git
+git clone https://github.com/indigo-dc/cloud-info-provider-indigo.git
+cd cloud-info-provider-indigo
+git checkout 0.10.0
 debuild --no-tgz-check binary
 ```
 
@@ -50,11 +61,13 @@ The build procedure is similar for the two packages.
 ### Building cloud-info-provider 0.7.0 on CentOS 7
 
 ``` sh
+sudo yum clean all
 sudo yum install -y centos-release-openstack-liberty
-sudo yum install rpm-build python-pbr python-setuptools
+sudo yum install -y rpm-build python-pbr python-setuptools git
 echo '%_topdir %(echo $HOME)/rpmbuild' > ~/.rpmmacros
 mkdir -p ~/rpmbuild/SOURCES
 git clone https://github.com/indigo-dc/cloud-info-provider.git
+cd cloud-info-provider
 git checkout 0.7.0
 python setup.py sdist
 cp dist/cloud_info_provider-*.tar.gz ~/rpmbuild/SOURCES
