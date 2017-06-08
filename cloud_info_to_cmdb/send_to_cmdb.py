@@ -12,9 +12,11 @@ import six
 class SendToCMDB(object):
     def __init__(self, opts):
         self.opts = opts
+        self.client_id = opts.oidc_client_id
+        self.client_secret = opts.oidc_client_secret
+        self.token_endpoint = opts.oidc_token_endpoint
         self.cmdb_read_url_base = opts.cmdb_read_endpoint
         self.cmdb_write_url = opts.cmdb_write_endpoint
-        self.cmdb_auth = (opts.cmdb_user, opts.cmdb_password)
         self.sitename = opts.sitename
         self.delete_non_local_images = opts.delete_non_local_images
         self.debug = opts.debug
@@ -31,6 +33,28 @@ class SendToCMDB(object):
         self.service_id = None
         self.remote_images = {}
         self.local_images = {}
+        self.oidc_token = None
+
+    def retrieve_token(self):
+        data = {'grant_type': 'client_credentials', 'scope': 'scim:read'}
+        auth = (self.cliend_id, self.client_secret)
+        r = requests.post(self.token_endpoint, data=data, auth=auth)
+        if r.status_code == requests.codes.ok:
+            json_answer = r.json()
+            logging.debug(json_answer)
+            token = json_answer['rows']
+            if len(token) > 1:
+                logging.error('Incorrect response')
+                logging.error("Response %s" % r.text)
+                sys.exit(1)
+            else:
+                self.oidc_token = json_answer['rows'][0]['access_token']
+                logging.info("Access token is %s" % self.oidc_token)
+        else:
+            logging.error("Unable to retrieve access token: %s" %
+                          r.status_code)
+            logging.error("Response %s" % r.text)
+            sys.exit(1)
 
     def retrieve_service_id(self):
         url = "%s/service/filters/sitename/%s" % (self.cmdb_read_url_base,
@@ -151,8 +175,13 @@ class SendToCMDB(object):
         cmdb_image_id = None
 
         url = self.cmdb_write_url
-        headers = {'Content-Type': 'application/json'}
-        auth = self.cmdb_auth
+        # XXX validate token
+        if self.oidc_token == None:
+            self.retrieve_token()
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': "Bearer %s" % self.oidc_token
+        }
         # XXX json.loads use unicode string
         # So convert unicode sting to byte strings
         # See http://stackoverflow.com/questions/956867
@@ -160,7 +189,7 @@ class SendToCMDB(object):
         # XXX couchdb expect JSON to use double quotes
         data = data.replace("'", '"')
         logging.debug(data)
-        r = requests.post(url, headers=headers, auth=auth, data=data)
+        r = requests.post(url, headers=headers, data=data)
         if r.status_code == requests.codes.created:
             logging.debug("Response %s" % r.text)
             json_answer = r.json()
@@ -194,9 +223,14 @@ class SendToCMDB(object):
     def purge_image(self, image_name, cmdb_id, rev):
         url = "%s/%s?rev=%s" % (self.cmdb_write_url, cmdb_id, rev)
         logging.debug(url)
-        headers = {'Content-Type': 'application/json'}
-        auth = self.cmdb_auth
-        r = requests.delete(url, headers=headers, auth=auth)
+        # XXX validate token
+        if self.oidc_token == None:
+            self.retrieve_token()
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': "Bearer %s" % self.oidc_token
+        }
+        r = requests.delete(url, headers=headers)
         if r.status_code == requests.codes.ok:
             logging.debug("Response %s" % r.text)
             logging.info("Deleted image %s, with id %s and rev %s" %
@@ -264,14 +298,19 @@ def parse_opts():
         help=('URL of the CMDB endpoint'))
 
     parser.add_argument(
-        '--cmdb-user',
+        '--oidc-client-id',
         required=True,
-        help=('Username to use to contact the CMDB endpoint'))
+        help=('OpenID Connect Client ID'))
 
     parser.add_argument(
-        '--cmdb-password',
+        '--oidc-client-secret',
         required=True,
-        help=('Password to use to contact the CMDB endpoint'))
+        help=('OpenID Connect Client Secret'))
+
+    parser.add_argument(
+        '--oidc-token-endpoint',
+        required=True,
+        help=('OpenID Connect token endpoint'))
 
     parser.add_argument(
         '--sitename',
