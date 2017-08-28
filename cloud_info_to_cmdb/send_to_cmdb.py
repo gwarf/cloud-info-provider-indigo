@@ -14,6 +14,8 @@ class SendToCMDB(object):
         self.opts = opts
         self.client_id = opts.oidc_client_id
         self.client_secret = opts.oidc_client_secret
+        self.oidc_username = opts.oidc_username
+        self.oidc_password = opts.oidc_password
         self.token_endpoint = opts.oidc_token_endpoint
         self.cmdb_read_url_base = opts.cmdb_read_endpoint
         self.cmdb_write_url = opts.cmdb_write_endpoint
@@ -36,20 +38,22 @@ class SendToCMDB(object):
         self.oidc_token = None
 
     def retrieve_token(self):
-        data = {'grant_type': 'client_credentials', 'scope': 'scim:read'}
-        auth = (self.cliend_id, self.client_secret)
-        r = requests.post(self.token_endpoint, data=data, auth=auth)
+        grant_type='password'
+        scopes='openid email'
+        data = {
+            'client_id': self.client_id,
+            'client_secret': self.client_secret,
+            'username': self.oidc_username,
+            'password': self.oidc_password,
+            'grant_type': grant_type,
+            'scope': scopes
+        }
+        r = requests.post(self.token_endpoint, data=data)
         if r.status_code == requests.codes.ok:
             json_answer = r.json()
             logging.debug(json_answer)
-            token = json_answer['rows']
-            if len(token) > 1:
-                logging.error('Incorrect response')
-                logging.error("Response %s" % r.text)
-                sys.exit(1)
-            else:
-                self.oidc_token = json_answer['rows'][0]['access_token']
-                logging.info("Access token is %s" % self.oidc_token)
+            self.oidc_token = json_answer['access_token']
+            logging.info("Access token: %s" % self.oidc_token)
         else:
             logging.error("Unable to retrieve access token: %s" %
                           r.status_code)
@@ -59,6 +63,13 @@ class SendToCMDB(object):
     def retrieve_service_id(self):
         url = "%s/service/filters/sitename/%s" % (self.cmdb_read_url_base,
                                                   self.sitename)
+        # XXX validate token
+        if self.oidc_token == None:
+            self.retrieve_token()
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': "Bearer %s" % self.oidc_token
+        }
         r = requests.get(url)
         if r.status_code == requests.codes.ok:
             json_answer = r.json()
@@ -71,6 +82,8 @@ class SendToCMDB(object):
                 self.service_id = json_answer['rows'][0]['id']
                 logging.info("Service ID for %s is %s" %
                              (self.sitename, self.service_id))
+            # FIXME Abort run for debug purpose
+            sys.exit(12)
         else:
             logging.error("Unable to retrieve service ID: %s" %
                           r.status_code)
@@ -311,6 +324,16 @@ def parse_opts():
         '--oidc-token-endpoint',
         required=True,
         help=('OpenID Connect token endpoint'))
+
+    parser.add_argument(
+        '--oidc-username',
+        required=True,
+        help=('OpenID Connect username'))
+
+    parser.add_argument(
+        '--oidc-password',
+        required=True,
+        help=('OpenID Connect password'))
 
     parser.add_argument(
         '--sitename',
