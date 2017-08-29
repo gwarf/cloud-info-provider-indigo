@@ -393,12 +393,12 @@ def parse_opts():
 
     parser.add_argument(
         '--cmdb-read-endpoint',
-        default='http://indigo.cloud.plgrid.pl/cmdb',
+        required=True,
         help=('URL of the CMDB endpoint'))
 
     parser.add_argument(
         '--cmdb-write-endpoint',
-        default='http://couch.cloud.plgrid.pl/indigo-cmdb-v2',
+        required=True,
         help=('URL of the CMDB endpoint'))
 
     parser.add_argument(
