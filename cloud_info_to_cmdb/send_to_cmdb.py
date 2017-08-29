@@ -171,7 +171,13 @@ class SendToCMDB(object):
         """
         url = "%s/service/id/%s/has_many/images?include_docs=true" % (
               self.cmdb_read_url_base, self.service_id)
-        r = requests.get(url)
+        if self.oidc_token == None:
+            self.retrieve_token()
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': "Bearer %s" % self.oidc_token
+        }
+        r = requests.get(url, headers=headers, verify=self.cmdb_verify_cert)
         if r.status_code == requests.codes.ok:
             json_answer = r.json()
             logging.debug(json_answer)
