@@ -14,19 +14,19 @@ class SendToCMDB(object):
     """
        Class used to interact with the INDIGO CMDB.
 
-       It will synchronize the CMDB with information from  a local
-       images/containers list.
+       It can be used to synchronize the CMDB with information from  a local
+       images/containers list received on standard input.
        The CMDB exposes two REST endpoints:
        - the read API allowing to get information
        - the write API (CouchDB) allowing to write information
 
        When updating an existing image it will create a new revision of the
-       image, and previous revisions have to be deleted.
+       image, and previous revisions have to be deleted explicitely.
     """
 
     def __init__(self, opts):
         """
-            Initialize the class, initializing required instance variable.
+            Initialize required instance variable from the parameters.
         """
         self.opts = opts
         self.client_id = opts.oidc_client_id
@@ -314,7 +314,10 @@ class SendToCMDB(object):
 
     def purge_image_old_revisions(self, image, cmdb_image_id):
         """
-           Purge old revisions of an image, has it is not automatically done.
+           Purge old revisions of an image.
+
+           When updating an image a new revision is created, so we need to
+           purge the old ones keeping only the latest one.
         """
         image_name = image['image_name']
         image_id = image['image_id']
@@ -350,6 +353,11 @@ class SendToCMDB(object):
             logging.error("Response %s" % r.text)
 
     def update_remote_images(self):
+        """
+            Get list of local and remote images, then upload new and updated
+            existing ones, it is also possible to delete entries no more
+            present locally.
+        """
         # TODO(gwarf) store both kind of images using a common type/structure
         self.retrieve_local_images()
         self.retrieve_remote_images()
@@ -390,6 +398,9 @@ class SendToCMDB(object):
 
 
 def parse_opts():
+    """
+        Parse all CLI arguments.
+    """
     parser = argparse.ArgumentParser(
         description='Submit images to CMDB',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -462,6 +473,9 @@ def parse_opts():
 
 
 def main():
+    """
+        Use SendToCMDB class to synchronize images to the CMDB.
+    """
     opts = parse_opts()
 
     sender = SendToCMDB(opts)
