@@ -36,6 +36,7 @@ class SendToCMDB(object):
         self.token_endpoint = opts.oidc_token_endpoint
         self.cmdb_read_url_base = opts.cmdb_read_endpoint
         self.cmdb_write_url = opts.cmdb_write_endpoint
+        self.cmdb_verify_cert = not opts.cmdb_allow_insecure
         self.sitename = opts.sitename
         self.delete_non_local_images = opts.delete_non_local_images
         self.debug = opts.debug
@@ -129,7 +130,7 @@ class SendToCMDB(object):
         # So lookup all of images of the service and check them all
         url = "%s/image/filters/service/%s" % (self.cmdb_read_url_base,
                                                self.service_id)
-        r = requests.get(url)
+        r = requests.get(url, verify=self.cmdb_verify_cert)
         if r.status_code == requests.codes.ok:
             json_answer = r.json()
             logging.debug(json_answer)
@@ -153,7 +154,7 @@ class SendToCMDB(object):
             read REST API.
         """
         url = "%s/image/id/%s" % (self.cmdb_read_url_base, cmdb_image_id)
-        r = requests.get(url)
+        r = requests.get(url, verify=self.cmdb_verify_cert)
         if r.status_code == requests.codes.ok:
             img_json_answer = r.json()
             logging.debug(img_json_answer)
@@ -284,7 +285,7 @@ class SendToCMDB(object):
         # Couchdb expect JSON to use double quotes
         data = data.replace("'", '"')
         logging.debug(data)
-        r = requests.post(url, headers=headers, data=data)
+        r = requests.post(url, headers=headers, data=data, verify=self.cmdb_verify_cert)
         if r.status_code == requests.codes.created:
             logging.debug("Response %s" % r.text)
             json_answer = r.json()
@@ -327,7 +328,7 @@ class SendToCMDB(object):
             'Content-Type': 'application/json',
             'Authorization': "Bearer %s" % self.oidc_token
         }
-        r = requests.delete(url, headers=headers)
+        r = requests.delete(url, headers=headers, verify=self.cmdb_verify_cert)
         if r.status_code == requests.codes.ok:
             logging.debug("Response %s" % r.text)
             logging.info("Deleted image %s, with id %s and rev %s" %
@@ -393,6 +394,11 @@ def parse_opts():
         '--cmdb-write-endpoint',
         default='http://couch.cloud.plgrid.pl/indigo-cmdb-v2',
         help=('URL of the CMDB endpoint'))
+
+    parser.add_argument(
+        '--cmdb-allow-insecure',
+        action='store_true',
+        help=('Allow insecure connection to the CMDB endpoint'))
 
     parser.add_argument(
         '--oidc-client-id',
