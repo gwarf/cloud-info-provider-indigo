@@ -94,14 +94,13 @@ class SendToCMDB(object):
         """
         url = "%s/service/filters/sitename/%s" % (self.cmdb_read_url_base,
                                                   self.sitename)
-        # XXX validate token
         if self.oidc_token == None:
             self.retrieve_token()
         headers = {
             'Content-Type': 'application/json',
             'Authorization': "Bearer %s" % self.oidc_token
         }
-        r = requests.get(url)
+        r = requests.get(url, headers=headers, verify=self.cmdb_verify_cert)
         if r.status_code == requests.codes.ok:
             json_answer = r.json()
             logging.debug(json_answer)
