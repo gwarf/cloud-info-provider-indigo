@@ -86,6 +86,12 @@ class SendToCMDB(object):
             sys.exit(1)
 
     def retrieve_service_id(self):
+        """
+            Retrieve the Service ID of the Site set as a parameter.
+
+            Search inside the service list to find the service that should be
+            used to store information about images and containers.
+        """
         url = "%s/service/filters/sitename/%s" % (self.cmdb_read_url_base,
                                                   self.sitename)
         # XXX validate token
