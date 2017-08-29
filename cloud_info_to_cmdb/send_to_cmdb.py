@@ -332,9 +332,12 @@ class SendToCMDB(object):
             # keep latest image!
             if cmdb_img_id != cmdb_image_id:
                 # delete old revision
-                self.purge_image(image_name, cmdb_img_id, rev)
+                self.purge_image_revision(image_name, cmdb_img_id, rev)
 
-    def purge_image(self, image_name, cmdb_id, rev):
+    def purge_image_revision(self, image_name, cmdb_id, rev):
+        """
+           Purge a specific revision of an image using the CMDB write API.
+        """
         url = "%s/%s?rev=%s" % (self.cmdb_write_url, cmdb_id, rev)
         logging.debug(url)
         if self.oidc_token == None:
