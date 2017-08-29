@@ -287,6 +287,7 @@ class SendToCMDB(object):
         # XXX json.loads use unicode string
         # So convert unicode sting to byte strings
         # See http://stackoverflow.com/questions/956867
+        # TODO(gwarf) check if _byteify is reuired with Python 3
         data = '{"type":"image","data":%s}' % self._byteify(image)
         # Couchdb expect JSON to use double quotes
         data = data.replace("'", '"')
