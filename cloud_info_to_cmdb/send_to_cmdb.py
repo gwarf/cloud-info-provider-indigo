@@ -16,6 +16,12 @@ class SendToCMDB(object):
 
        It will synchronize the CMDB with information from  a local
        images/containers list.
+       The CMDB exposes two REST endpoints:
+       - the read API allowing to get information
+       - the write API (CouchDB) allowing to write information
+
+       When updating an existing image it will create a new revision of the
+       image, and previous revisions have to be deleted.
     """
 
     def __init__(self, opts):
@@ -71,7 +77,7 @@ class SendToCMDB(object):
             json_answer = r.json()
             logging.debug(json_answer)
             self.oidc_token = json_answer['access_token']
-            logging.info("Access token: %s" % self.oidc_token)
+            logging.debug("Access token: %s" % self.oidc_token)
         else:
             logging.error("Unable to retrieve access token: %s" %
                           r.status_code)
@@ -109,6 +115,10 @@ class SendToCMDB(object):
             sys.exit(1)
 
     def retrieve_remote_service_images(self, image_id):
+        """
+            Retrieve the list of the different revision of an image/container
+            stored in the CMDB using the rest REST API.
+        """
         service_images = []
         # Find all images having the same name
         # TODO(gwarf) Ask for a way to use : or to search using local image_id
@@ -138,6 +148,10 @@ class SendToCMDB(object):
             logging.error("Response %s" % r.text)
 
     def retrieve_remote_image(self, cmdb_image_id):
+        """
+            Retrieve one image/container using its unique CMDB ID, using the
+            read REST API.
+        """
         url = "%s/image/id/%s" % (self.cmdb_read_url_base, cmdb_image_id)
         r = requests.get(url)
         if r.status_code == requests.codes.ok:
@@ -150,6 +164,10 @@ class SendToCMDB(object):
             logging.error("Response %s" % r.text)
 
     def retrieve_remote_images(self):
+        """
+            Retrieve the list of the images registered in the CMDB, using the
+            read REST API.
+        """
         url = "%s/service/id/%s/has_many/images?include_docs=true" % (
               self.cmdb_read_url_base, self.service_id)
         r = requests.get(url)
@@ -185,29 +203,30 @@ class SendToCMDB(object):
             Image list has to be provided as a JSON array:
             [
               {
-                'image_id': 'first_image',
-                'image_name': 'First Image',
-                'image_description' 'This is the first image',
-                'image_marketplace_id' 'http://my.marketplace.domain.tld/first_image',
-                'architecture': 'x86_64',
-                'image_os': 'linux',
-                'distribution': 'ubuntu',
-                'version': '14.04'
+                "image_id": "first_image",
+                "image_name": "First Image",
+                "image_description": "This is the first image",
+                "image_marketplace_id": "http://my.marketplace.domain.tld/first_image",
+                "architecture": "x86_64",
+                "image_os": "linux",
+                "distribution": "ubuntu",
+                "version": "14.04"
               },
               {
-                'image_id': 'second_image',
-                'image_name': 'Second Image',
-                'image_version': '2',
-                'image_description' 'This is the Second image',
-                'architecture': 'x86_64',
-                'image_os': 'linux',
-                'distribution': 'CentOS',
-                'version': '7.0'
+                "image_id": "second_image",
+                "image_name": "Second Image",
+                "image_version": "2",
+                "image_description": "This is the Second image",
+                "architecture": "x86_64",
+                "image_os": "linux",
+                "distribution": "CentOS",
+                "version": "7.0"
               }
             ]
 
-            Images will be stored in a dict of dicts using the image_id as the
-            key and the value is the full image attributes as a dict.
+            Images will be stored in self.local_images as a dict of dicts using
+            the image_id as the key and the value is the full image attributes
+            as a dict:
             {
               'first_image: { 'image_id': 'first_image', 'image_name' ...},
               'second_image: { 'image_id': 'secondf_image', 'image_name' ...},
@@ -217,7 +236,7 @@ class SendToCMDB(object):
         json_input = ''
         for line in sys.stdin.readlines():
             json_input += line.strip().rstrip('\n')
-        # XXX we should exit cleanly if unable to parse stdin as JSON
+        # TODO(gwarf) we should exit cleanly if unable to parse stdin as JSON
         images = json.loads(json_input)
         for image in images:
             self.local_images[image['image_id']] = image
@@ -225,6 +244,11 @@ class SendToCMDB(object):
         logging.debug(json_input)
 
     def _byteify(self, input):
+        """
+            Return unicode object as string objects
+
+            See http://stackoverflow.com/questions/956867
+        """
         if isinstance(input, dict):
             return {self._byteify(key): self._byteify(value)
                     for key, value in input.iteritems()}
@@ -236,12 +260,17 @@ class SendToCMDB(object):
             return input
 
     def submit_image(self, image):
+        """
+            Register an image inside the CMDB.
+
+            The write REST endpoint (CouchDB) has to be used with OpenID
+            Connect-based authentication.
+        """
         image_name = image["image_name"]
         image['service'] = self.service_id
         cmdb_image_id = None
 
         url = self.cmdb_write_url
-        # XXX validate token
         if self.oidc_token == None:
             self.retrieve_token()
         headers = {
@@ -252,7 +281,7 @@ class SendToCMDB(object):
         # So convert unicode sting to byte strings
         # See http://stackoverflow.com/questions/956867
         data = '{"type":"image","data":%s}' % self._byteify(image)
-        # XXX couchdb expect JSON to use double quotes
+        # Couchdb expect JSON to use double quotes
         data = data.replace("'", '"')
         logging.debug(data)
         r = requests.post(url, headers=headers, data=data)
@@ -271,6 +300,9 @@ class SendToCMDB(object):
         return cmdb_image_id
 
     def purge_image_old_revisions(self, image, cmdb_image_id):
+        """
+           Purge old revisions of an image, has it is not automatically done.
+        """
         image_name = image['image_name']
         image_id = image['image_id']
         # Find all images having the same id
@@ -289,7 +321,6 @@ class SendToCMDB(object):
     def purge_image(self, image_name, cmdb_id, rev):
         url = "%s/%s?rev=%s" % (self.cmdb_write_url, cmdb_id, rev)
         logging.debug(url)
-        # XXX validate token
         if self.oidc_token == None:
             self.retrieve_token()
         headers = {
