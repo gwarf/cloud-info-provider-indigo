@@ -10,7 +10,18 @@ import six
 
 
 class SendToCMDB(object):
+
+    """
+       Class used to interact with the INDIGO CMDB.
+
+       It will synchronize the CMDB with information from  a local
+       images/containers list.
+    """
+
     def __init__(self, opts):
+        """
+            Initialize the class, initializing required instance variable.
+        """
         self.opts = opts
         self.client_id = opts.oidc_client_id
         self.client_secret = opts.oidc_client_secret
@@ -38,6 +49,13 @@ class SendToCMDB(object):
         self.oidc_token = None
 
     def retrieve_token(self):
+        """
+            Retrieve an OpenID Connect Access token.
+
+            The OpenID Connect Access token will be used to access the CMDB
+            integrated with the INDIGO IAM.
+        """
+
         grant_type='password'
         scopes='openid email'
         data = {
@@ -161,6 +179,41 @@ class SendToCMDB(object):
             sys.exit(1)
 
     def retrieve_local_images(self):
+        """
+            Retrieve image/container list from standard input.
+
+            Image list has to be provided as a JSON array:
+            [
+              {
+                'image_id': 'first_image',
+                'image_name': 'First Image',
+                'image_description' 'This is the first image',
+                'image_marketplace_id' 'http://my.marketplace.domain.tld/first_image',
+                'architecture': 'x86_64',
+                'image_os': 'linux',
+                'distribution': 'ubuntu',
+                'version': '14.04'
+              },
+              {
+                'image_id': 'second_image',
+                'image_name': 'Second Image',
+                'image_version': '2',
+                'image_description' 'This is the Second image',
+                'architecture': 'x86_64',
+                'image_os': 'linux',
+                'distribution': 'CentOS',
+                'version': '7.0'
+              }
+            ]
+
+            Images will be stored in a dict of dicts using the image_id as the
+            key and the value is the full image attributes as a dict.
+            {
+              'first_image: { 'image_id': 'first_image', 'image_name' ...},
+              'second_image: { 'image_id': 'secondf_image', 'image_name' ...},
+            }
+
+        """
         json_input = ''
         for line in sys.stdin.readlines():
             json_input += line.strip().rstrip('\n')
