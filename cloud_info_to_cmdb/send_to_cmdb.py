@@ -258,7 +258,7 @@ class SendToCMDB(object):
         """
         if isinstance(input, dict):
             return {self._byteify(key): self._byteify(value)
-                    for key, value in input.iteritems()}
+                    for key, value in input.items()}
         elif isinstance(input, list):
             return [self._byteify(element) for element in input]
         elif isinstance(input, six.text_type):
